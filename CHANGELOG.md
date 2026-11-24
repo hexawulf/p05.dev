@@ -18,8 +18,8 @@ All notable changes to `probplots-web` are documented in this file.
 - Fixed unhandled JS fetch errors with inline `role="alert"` banners and fixed About modal centering & backdrop dismissal.
 
 ### Removed
-- Deleted unused dead module `app/utils_plot_png.py` and unused imports in `app/dlbdss_core.py`.
-- Removed third-party `https://cdn.tailwindcss.com` runtime dependency.
+- Deleted unused dead module `app/utils_plot_png.py`, obsolete v1 build prompt `plan.md`, and unused imports in `app/dlbdss_core.py`.
+- Removed third-party `https://cdn.tailwindcss.com` runtime dependency and stale `containeryard.org` CORS allowlist entry in `nginx-probplots.piapps.dev`.
 
 ## [0.2.0] - 2025-11-09
 
