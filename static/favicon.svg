@@ -1,23 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="probplots-web Logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="p05.dev Logo">
   <defs>
-    <linearGradient id="pp-teal" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="app-teal" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#14b8a6" />
       <stop offset="100%" stop-color="#0d9488" />
     </linearGradient>
   </defs>
-  <rect x="8" y="8" width="240" height="240" rx="56" ry="56" fill="url(#pp-teal)" />
+  <rect x="8" y="8" width="240" height="240" rx="56" ry="56" fill="url(#app-teal)" />
   <path
-    d="M 42 184 C 76 184, 92 72, 128 72 C 164 72, 180 184, 214 184"
+    d="M 164 182 L 164 114 C 176 148, 190 176, 214 182 Z"
+    fill="#ffffff"
+    fill-opacity="0.34"
+  />
+  <path
+    d="M 42 182 C 74 182, 90 70, 126 70 C 162 70, 178 182, 214 182"
     fill="none"
     stroke="#ffffff"
-    stroke-width="18"
+    stroke-width="16"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <path
-    d="M 96 184 L 96 108 C 107 82, 117 72, 128 72 C 139 72, 149 82, 160 108 L 160 184 Z"
-    fill="#ffffff"
-    fill-opacity="0.28"
-  />
-  <line x1="42" y1="184" x2="214" y2="184" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-opacity="0.85" />
+  <line x1="164" y1="86" x2="164" y2="182" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-dasharray="10 10" stroke-opacity="0.92" />
+  <line x1="40" y1="182" x2="216" y2="182" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-opacity="0.88" />
 </svg>

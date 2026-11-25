@@ -3,37 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0d9488">
-  <title>probplots-web</title>
+  <meta name="theme-color" content="#0D9488">
+  <title>p05.dev — Interactive Probability &amp; Statistics Workbench</title>
+  <meta name="author" content="Erling Wulf Weinreich (0xWulf)">
+  <meta name="description" content="Interactive probability distributions, hypothesis tests, statistical power, distribution fitting, and CLT simulation workbench backed by SciPy.">
+  <meta property="og:title" content="p05.dev — Interactive Probability &amp; Statistics Workbench">
+  <meta property="og:description" content="Explore 14 distributions, run z/t/Welch/chi-squared/ANOVA tests, fit empirical data with MLE &amp; Q-Q plots, and simulate the Central Limit Theorem.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <script src="/static/theme-init.js"></script>
-  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/js/theme-init.js"></script>
+  <link rel="stylesheet" href="/static/css/workbench.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-inner">
+  <header class="topbar">
+    <div class="topbar-inner">
       <div class="brand">
-        <img src="/static/favicon.svg" alt="" class="brand-mark" width="34" height="34">
-        <div class="brand-text">
-          <h1 class="brand-title">probplots-web</h1>
-          <span class="brand-sub">Probability &amp; Statistics Calculator</span>
+        <img src="/static/favicon.svg" alt="p05.dev logo" class="brand-mark" width="32" height="32">
+        <div class="brand-copy">
+          <h1 class="brand-wordmark mono">p05.dev</h1>
+          <span class="brand-sub">Interactive probability &amp; statistics workbench</span>
         </div>
       </div>
 
-      <div class="header-actions">
-        <label class="precision-wrap" for="precision-select">
-          <span class="precision-label">Decimals</span>
-          <select id="precision-select" class="select-compact" aria-label="Decimal precision">
-            <option value="2">2 d.p.</option>
-            <option value="4" selected>4 d.p.</option>
-            <option value="6">6 d.p.</option>
-            <option value="full">Full</option>
-          </select>
-        </label>
+      <div class="topbar-controls">
+        <div class="search-box">
+          <label for="dist-search" class="sr-only">Search distributions</label>
+          <input id="dist-search" class="search-input" type="search" placeholder="Find distribution…" autocomplete="off">
+          <span class="kbd-hint hide-sm">/</span>
+          <div id="dist-search-results" class="search-dropdown hidden" role="listbox" aria-label="Distribution matches"></div>
+        </div>
 
-        <a class="nav-link-pill hide-xs" href="/docs">API Docs</a>
+        <label class="sr-only" for="precision-select">Decimal precision</label>
+        <select id="precision-select" class="select-sm" title="Decimal precision">
+          <option value="2">2 d.p.</option>
+          <option value="4" selected>4 d.p.</option>
+          <option value="6">6 d.p.</option>
+          <option value="full">Full</option>
+        </select>
 
-        <button id="btn-theme" type="button" class="icon-btn" title="Toggle dark/light theme" aria-label="Toggle theme">
+        <button id="btn-share" type="button" class="btn btn-sm" title="Copy URL with exact workbench state">Copy Share Link</button>
+        <button id="btn-code-drawer" type="button" class="btn btn-sm" title="Toggle Python / R / LaTeX / curl drawer (c)">Code &amp; Formula</button>
+        <a class="btn btn-sm hide-sm" href="/docs">API Docs</a>
+
+        <button id="btn-theme" type="button" class="icon-btn" title="Toggle dark/light theme (d)" aria-label="Toggle theme">
           <svg id="icon-sun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
@@ -43,454 +56,557 @@
           </svg>
         </button>
 
-        <button id="btn-about" type="button" class="icon-btn" title="About probplots-web" aria-label="About">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M12 8h.01M11 12h1v4h1"></path>
-          </svg>
-        </button>
+        <button id="btn-help" type="button" class="icon-btn" title="Keyboard shortcuts &amp; About (?)" aria-label="Shortcuts and About">?</button>
       </div>
     </div>
   </header>
 
-  <main class="container">
-    <!-- Distribution tabs -->
-    <nav class="tabs-bar" role="tablist" aria-label="Distributions">
-      <button type="button" role="tab" class="tab-btn" data-tab="normal" aria-selected="true" aria-controls="panel-normal" id="tab-normal">Normal</button>
-      <button type="button" role="tab" class="tab-btn" data-tab="binomial" aria-selected="false" aria-controls="panel-binomial" id="tab-binomial">Binomial</button>
-      <button type="button" role="tab" class="tab-btn" data-tab="poisson" aria-selected="false" aria-controls="panel-poisson" id="tab-poisson">Poisson</button>
-      <button type="button" role="tab" class="tab-btn" data-tab="other" aria-selected="false" aria-controls="panel-other" id="tab-other">Geo / Exp / Unif</button>
-      <button type="button" role="tab" class="tab-btn" data-tab="clt" aria-selected="false" aria-controls="panel-clt" id="tab-clt">CLT &amp; Bounds</button>
-      <button type="button" role="tab" class="tab-btn" data-tab="joint" aria-selected="false" aria-controls="panel-joint" id="tab-joint">Joint (X, Y)</button>
+  <main class="shell">
+    <nav class="workspace-nav" role="tablist" aria-label="Workspaces">
+      <button type="button" role="tab" class="ws-tab" id="tab-explorer" data-ws="explorer" aria-selected="true" aria-controls="ws-explorer">
+        <span class="ws-num mono">1</span>Distribution Explorer
+      </button>
+      <button type="button" role="tab" class="ws-tab" id="tab-inference" data-ws="inference" aria-selected="false" aria-controls="ws-inference">
+        <span class="ws-num mono">2</span>Hypothesis, CIs &amp; Power
+      </button>
+      <button type="button" role="tab" class="ws-tab" id="tab-fitting" data-ws="fitting" aria-selected="false" aria-controls="ws-fitting">
+        <span class="ws-num mono">3</span>Data &amp; MLE Fitter
+      </button>
+      <button type="button" role="tab" class="ws-tab" id="tab-simulators" data-ws="simulators" aria-selected="false" aria-controls="ws-simulators">
+        <span class="ws-num mono">4</span>CLT &amp; Joint Matrix
+      </button>
     </nav>
 
-    <!-- NORMAL -->
-    <section id="panel-normal" class="workspace-grid" role="tabpanel" aria-labelledby="tab-normal">
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Normal Distribution</h2>
-          <span class="badge" id="norm-badge">X ~ N(0, 1²)</span>
+    <!-- Collapsible Code & Formula Drawer -->
+    <section id="code-drawer" class="drawer hidden" aria-label="Code and Formula Generator">
+      <div class="panel-head">
+        <div class="row-wrap">
+          <h2 class="panel-title">Code &amp; Formula</h2>
+          <div class="seg-group" role="tablist" aria-label="Code language">
+            <button type="button" class="seg-btn is-active" data-lang="python">Python (scipy)</button>
+            <button type="button" class="seg-btn" data-lang="r">R</button>
+            <button type="button" class="seg-btn" data-lang="latex">LaTeX</button>
+            <button type="button" class="seg-btn" data-lang="curl">curl (/api/v2)</button>
+          </div>
+        </div>
+        <div class="row-wrap">
+          <button id="btn-copy-snippet" type="button" class="btn btn-primary btn-sm">Copy Snippet</button>
+          <button id="btn-close-drawer" type="button" class="btn btn-sm">Close</button>
+        </div>
+      </div>
+      <pre id="snippet-output" class="code-block mono" tabindex="0"></pre>
+    </section>
+
+    <!-- WORKSPACE 1: DISTRIBUTION EXPLORER & COMPARATOR -->
+    <section id="ws-explorer" class="ws-grid" role="tabpanel" aria-labelledby="tab-explorer">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Distribution &amp; Parameters</h2>
+          <span id="exp-notation" class="badge mono">X ~ N(0, 1)</span>
         </div>
 
-        <div class="sub-section">
+        <label class="field">
+          Distribution (14 families)
+          <select id="exp-dist-select" class="select"></select>
+        </label>
+
+        <div id="exp-note" class="chart-hint"></div>
+
+        <div class="sub-block">
           <p class="sub-label">Parameters</p>
-          <div class="field-grid cols-2">
-            <label class="field">Mean μ<input id="norm-mu" class="input" type="number" step="any" value="0"></label>
-            <label class="field">Std dev σ (&gt; 0)<input id="norm-sigma" class="input" type="number" step="any" value="1"></label>
-          </div>
-          <div class="moments-bar" id="norm-moments"></div>
+          <div id="exp-params-wrap"></div>
         </div>
 
-        <form id="f-ncdf" class="sub-section">
-          <p class="sub-label">Point Query (CDF, Upper Tail, PDF &amp; Z-score)</p>
-          <div class="field-grid cols-2">
-            <label class="field">x<input class="input" name="x" type="number" step="any" value="1.96"></label>
-            <input type="hidden" name="mu" value="0">
-            <input type="hidden" name="sigma" value="1">
-            <button class="btn btn-primary" type="submit">Compute Φ(x)</button>
-          </div>
-        </form>
-
-        <form id="f-nint" class="sub-section">
-          <p class="sub-label">Interval Probability P(a ≤ X ≤ b)</p>
-          <div class="field-grid cols-3">
-            <label class="field">Lower a<input class="input" name="lower" type="number" step="any" value="-1.96"></label>
-            <label class="field">Upper b<input class="input" name="upper" type="number" step="any" value="1.96"></label>
-            <button class="btn btn-primary" type="submit">Interval P</button>
-          </div>
-        </form>
-
-        <form id="f-ninv" class="sub-section">
-          <p class="sub-label">Inverse Normal Quantile Φ⁻¹(p)</p>
-          <div class="field-grid cols-2">
-            <label class="field">Area p (0–1)<input class="input" name="p" type="number" step="any" value="0.975"></label>
-            <button class="btn btn-primary" type="submit">Compute Φ⁻¹(p)</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Result &amp; Plot</h2>
-          <div class="btn-row">
-            <button id="btn-npdf" type="button" class="btn btn-secondary btn-sm">Plot Shaded PDF</button>
-            <button id="btn-npdf-plain" type="button" class="btn btn-ghost btn-sm">Plain PDF</button>
-          </div>
-        </div>
-        <div id="r-norm" class="result-box"><div class="result-empty">Run a calculation to see formatted output, Z-score, and Casio FX-991EX steps.</div></div>
-        <div class="plot-stage">
-          <div class="plot-toolbar">
-            <span class="card-desc" id="plot-label-norm">Normal density curve</span>
-            <a id="dl-norm" class="btn btn-ghost btn-sm hidden" download="normal-pdf.png">Download PNG</a>
-          </div>
-          <div class="plot-frame">
-            <span id="ph-norm" class="plot-placeholder">Click “Plot Shaded PDF” to render a server-side PNG.</span>
-            <img id="img-npdf" class="hidden" alt="Normal probability density plot">
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- BINOMIAL -->
-    <section id="panel-binomial" class="workspace-grid hidden" role="tabpanel" aria-labelledby="tab-binomial">
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Binomial Distribution</h2>
-          <span class="badge" id="binom-badge">X ~ Bin(20, 0.5)</span>
-        </div>
-
-        <div class="sub-section">
-          <p class="sub-label">Parameters</p>
-          <div class="field-grid cols-2">
-            <label class="field">Trials n<input id="binom-n" class="input" type="number" step="1" min="1" value="20"></label>
-            <label class="field">Success prob p<input id="binom-p" class="input" type="number" step="any" min="0" max="1" value="0.5"></label>
-          </div>
-          <div class="moments-bar" id="binom-moments"></div>
-        </div>
-
-        <form id="f-bpmf" class="sub-section">
-          <p class="sub-label">Single Value k</p>
-          <div class="field-grid cols-2">
-            <label class="field">k (0 ≤ k ≤ n)<input id="binom-k" class="input" name="k" type="number" step="1" min="0" value="10"></label>
-            <button class="btn btn-primary" type="submit">Exact P(X = k)</button>
-          </div>
-          <div class="btn-row">
-            <button id="btn-binom-atmost" type="button" class="btn btn-ghost btn-sm">At most P(X ≤ k)</button>
-            <button id="btn-binom-atleast" type="button" class="btn btn-ghost btn-sm">At least P(X ≥ k)</button>
-          </div>
-        </form>
-
-        <form id="f-bcdf-range" class="sub-section">
-          <p class="sub-label">Range Probability P(kmin ≤ X ≤ kmax)</p>
-          <div class="field-grid cols-3">
-            <label class="field">kmin<input id="binom-kmin" class="input" name="kmin" type="number" step="1" min="0" value="8"></label>
-            <label class="field">kmax<input id="binom-kmax" class="input" name="kmax" type="number" step="1" min="0" value="12"></label>
-            <button class="btn btn-primary" type="submit">Between P</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Result &amp; Plot</h2>
-          <div class="btn-row">
-            <button id="btn-binom-pmf-plot" type="button" class="btn btn-secondary btn-sm">Plot PMF</button>
-            <button id="btn-binom-cdf-plot" type="button" class="btn btn-secondary btn-sm">Plot CDF</button>
-            <button id="btn-binom-sim" type="button" class="btn btn-ghost btn-sm">Simulate</button>
-          </div>
-        </div>
-        <div id="r-binom" class="result-box"><div class="result-empty">Choose Exact, At most, At least, or Between to compute Binomial probabilities.</div></div>
-        <div class="plot-stage">
-          <div class="plot-toolbar">
-            <span class="card-desc" id="plot-label-binom">Binomial distribution plot</span>
-            <a id="dl-binom" class="btn btn-ghost btn-sm hidden" download="binomial-plot.png">Download PNG</a>
-          </div>
-          <div class="plot-frame">
-            <span id="ph-binom" class="plot-placeholder">Click “Plot PMF”, “Plot CDF”, or “Simulate” to render.</span>
-            <img id="img-binom-plot" class="hidden" alt="Binomial distribution plot">
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- POISSON -->
-    <section id="panel-poisson" class="workspace-grid hidden" role="tabpanel" aria-labelledby="tab-poisson">
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Poisson Distribution</h2>
-          <span class="badge" id="pois-badge">X ~ Pois(λ = 3)</span>
-        </div>
-
-        <form id="f-pparams" class="sub-section">
-          <p class="sub-label">Parameters &amp; Single Value</p>
-          <div class="field-grid cols-2">
-            <label class="field">Rate λ (&gt; 0)<input id="pois-lam" class="input" name="lam" type="number" step="any" value="3"></label>
-            <label class="field">Count k (≥ 0)<input id="pois-k" class="input" name="k" type="number" step="1" min="0" value="2"></label>
-          </div>
-          <div class="moments-bar" id="pois-moments"></div>
-          <div class="btn-row">
-            <button id="btn-pois-pmf" type="button" class="btn btn-primary">Exact P(X = k)</button>
-            <button id="btn-pois-cdf" type="button" class="btn btn-ghost">At most P(X ≤ k)</button>
-            <button id="btn-pois-atleast" type="button" class="btn btn-ghost">At least P(X ≥ k)</button>
-          </div>
-        </form>
-
-        <form id="f-prange" class="sub-section">
-          <p class="sub-label">Range Probability P(kmin ≤ X ≤ kmax)</p>
-          <div class="field-grid cols-3">
-            <label class="field">kmin<input id="pois-kmin" class="input" name="kmin" type="number" step="1" min="0" value="1"></label>
-            <label class="field">kmax<input id="pois-kmax" class="input" name="kmax" type="number" step="1" min="0" value="4"></label>
-            <button class="btn btn-primary" type="submit">Between P</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Result &amp; Plot</h2>
-          <div class="btn-row">
-            <button id="btn-pois-pmf-exact" type="button" class="btn btn-secondary btn-sm">Plot PMF</button>
-            <button id="btn-pois-cdf-plot" type="button" class="btn btn-secondary btn-sm">Plot CDF</button>
-            <button id="btn-pois-sim" type="button" class="btn btn-ghost btn-sm">Simulate</button>
-          </div>
-        </div>
-        <div id="r-pois" class="result-box"><div class="result-empty">Compute PMF, CDF, upper tail, or range probability for Poisson(λ).</div></div>
-        <div class="plot-stage">
-          <div class="plot-toolbar">
-            <span class="card-desc" id="plot-label-pois">Poisson distribution plot</span>
-            <a id="dl-pois" class="btn btn-ghost btn-sm hidden" download="poisson-plot.png">Download PNG</a>
-          </div>
-          <div class="plot-frame">
-            <span id="ph-pois" class="plot-placeholder">Click “Plot PMF”, “Plot CDF”, or “Simulate” to render.</span>
-            <img id="img-pois" class="hidden" alt="Poisson distribution plot">
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- OTHER: GEOMETRIC / EXPONENTIAL / UNIFORM -->
-    <section id="panel-other" class="workspace-grid hidden" role="tabpanel" aria-labelledby="tab-other">
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Geometric · Exponential · Uniform</h2>
-          <span class="badge">Closed-form + Plots</span>
-        </div>
-
-        <form id="f-geom" class="sub-section">
-          <div class="card-head">
-            <p class="sub-label">Geometric (k failures before 1st success)</p>
-            <button id="btn-geom-plot" type="button" class="btn btn-secondary btn-sm">Plot PMF</button>
-          </div>
-          <div class="field-grid cols-3">
-            <label class="field">p (0 &lt; p ≤ 1)<input class="input" name="p" type="number" step="any" value="0.3"></label>
-            <label class="field">k failures<input class="input" name="k" type="number" step="1" min="0" value="2"></label>
-            <button class="btn btn-primary" type="submit">PMF &amp; CDF</button>
-          </div>
-        </form>
-
-        <form id="f-exp" class="sub-section">
-          <div class="card-head">
-            <p class="sub-label">Exponential (rate λ &gt; 0)</p>
-            <div class="btn-row">
-              <button id="btn-exp-pdf-plot" type="button" class="btn btn-secondary btn-sm">Plot PDF</button>
-              <button id="btn-exp-cdf-plot" type="button" class="btn btn-ghost btn-sm">Plot CDF</button>
+        <div class="sub-block">
+          <div class="panel-head">
+            <p class="sub-label">Shaded Region &amp; Bounds</p>
+            <div class="seg-group" id="exp-view-toggle">
+              <button type="button" class="seg-btn is-active" data-view="pdf">PDF / PMF</button>
+              <button type="button" class="seg-btn" data-view="cdf">CDF</button>
             </div>
           </div>
-          <div class="field-grid cols-3">
-            <label class="field">Rate λ<input class="input" name="lam" type="number" step="any" value="0.5"></label>
-            <label class="field">x (≥ 0)<input class="input" name="x" type="number" step="any" value="2"></label>
-            <button class="btn btn-primary" type="submit">CDF &amp; PDF</button>
+          <div class="seg-group" id="exp-region-group">
+            <button type="button" class="seg-btn" data-region="left">Left P(X≤a)</button>
+            <button type="button" class="seg-btn" data-region="right">Right P(X≥b)</button>
+            <button type="button" class="seg-btn" data-region="interval">Interval</button>
+            <button type="button" class="seg-btn is-active" data-region="two_tailed">Two-Tailed</button>
           </div>
-        </form>
+          <div class="grid-2">
+            <label class="field" id="exp-a-wrap">Lower bound a
+              <input id="exp-bound-a" class="input" type="number" step="any" value="-1.959964">
+            </label>
+            <label class="field" id="exp-b-wrap">Upper bound b
+              <input id="exp-bound-b" class="input" type="number" step="any" value="1.959964">
+            </label>
+          </div>
+        </div>
 
-        <form id="f-unif" class="sub-section">
-          <div class="card-head">
-            <p class="sub-label">Continuous Uniform [a, b]</p>
-            <div class="btn-row">
-              <button id="btn-unif-pdf-plot" type="button" class="btn btn-secondary btn-sm">Plot PDF</button>
-              <button id="btn-unif-cdf-plot" type="button" class="btn btn-ghost btn-sm">Plot CDF</button>
-            </div>
+        <div class="sub-block">
+          <p class="sub-label">Inverse / Quantile Solver (Snap Bounds to p)</p>
+          <div class="row-wrap">
+            <input id="exp-target-p" class="input" type="number" step="any" min="0.0000001" max="0.9999999" value="0.05" aria-label="Target probability p">
+            <button id="btn-snap-p" type="button" class="btn btn-primary btn-sm">Snap to p</button>
+            <button type="button" class="preset-pill p-quick" data-p="0.01">0.01</button>
+            <button type="button" class="preset-pill p-quick" data-p="0.05">0.05</button>
+            <button type="button" class="preset-pill p-quick" data-p="0.95">0.95</button>
+            <button type="button" class="preset-pill p-quick" data-p="0.99">0.99</button>
           </div>
-          <div class="field-grid cols-4">
-            <label class="field">a<input class="input" name="a" type="number" step="any" value="0"></label>
-            <label class="field">b<input class="input" name="b" type="number" step="any" value="10"></label>
-            <label class="field">x<input class="input" name="x" type="number" step="any" value="4"></label>
-            <button class="btn btn-primary" type="submit">CDF &amp; PDF</button>
+        </div>
+
+        <div class="sub-block">
+          <div class="panel-head">
+            <p class="sub-label">Overlay / Compare (up to 3 curves)</p>
+            <button id="btn-add-overlay" type="button" class="btn btn-sm">+ Add Current</button>
           </div>
-        </form>
+          <div id="exp-overlays-list"></div>
+        </div>
+
+        <div class="sub-block">
+          <p class="sub-label">Quick Presets</p>
+          <div id="exp-presets-bar" class="row-wrap"></div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Result &amp; Plot</h2>
-        </div>
-        <div id="r-other" class="result-box"><div class="result-empty">Run Geometric, Exponential, or Uniform to see probability, survival, and moments.</div></div>
-        <div class="plot-stage">
-          <div class="plot-toolbar">
-            <span class="card-desc" id="plot-label-other">Distribution plot</span>
-            <a id="dl-other" class="btn btn-ghost btn-sm hidden" download="distribution-plot.png">Download PNG</a>
-          </div>
-          <div class="plot-frame">
-            <span id="ph-other" class="plot-placeholder">Use any Plot button on the left to render Geometric, Exponential, or Uniform curves.</span>
-            <img id="img-other" class="hidden" alt="Selected distribution plot">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title" id="exp-chart-title">Normal (Gaussian) · α = 0.05 Two-Tailed</h2>
+          <div class="row-wrap">
+            <button id="exp-export-svg" type="button" class="btn btn-sm">SVG</button>
+            <button id="exp-export-png" type="button" class="btn btn-sm">2× PNG</button>
+            <button id="exp-export-json" type="button" class="btn btn-sm">JSON</button>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- CLT & INEQUALITIES -->
-    <section id="panel-clt" class="workspace-grid hidden" role="tabpanel" aria-labelledby="tab-clt">
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">CLT &amp; Probability Bounds</h2>
-          <span class="badge">X̄ ~ N(μ, σ²/n)</span>
+        <div id="exp-error" class="banner banner-err hidden" role="alert"></div>
+
+        <div class="hero-readout">
+          <div>
+            <div id="exp-prob-expr" class="hero-expr mono">P(X ≤ -1.96 or X ≥ 1.96)</div>
+            <div id="exp-comp-text" class="chart-hint mono">Complement: 0.9500 (95.00%)</div>
+          </div>
+          <div id="exp-prob-val" class="hero-val mono">0.0500</div>
         </div>
 
-        <form id="f-clt" class="sub-section">
-          <p class="sub-label">Central Limit Theorem — P(lower ≤ X̄ ≤ upper)</p>
-          <div class="field-grid cols-3">
-            <label class="field">Pop μ<input class="input" name="mu" type="number" step="any" value="50"></label>
-            <label class="field">Pop σ<input class="input" name="sigma" type="number" step="any" value="10"></label>
-            <label class="field">Sample n<input class="input" name="n" type="number" step="1" min="1" value="36"></label>
-          </div>
-          <div class="field-grid cols-3">
-            <label class="field">Lower<input class="input" name="lower" type="number" step="any" value="48"></label>
-            <label class="field">Upper<input class="input" name="upper" type="number" step="any" value="54"></label>
-            <button class="btn btn-primary" type="submit">Compute CLT</button>
-          </div>
-        </form>
-
-        <form id="f-markov" class="sub-section">
-          <p class="sub-label">Markov Inequality — P(X ≥ t) ≤ E[X] / t (X ≥ 0)</p>
-          <div class="field-grid cols-3">
-            <label class="field">E[X] (≥ 0)<input class="input" name="mean" type="number" step="any" value="40"></label>
-            <label class="field">Threshold t (&gt; 0)<input class="input" name="t" type="number" step="any" value="240"></label>
-            <button class="btn btn-ghost" type="submit">Markov Bound</button>
-          </div>
-        </form>
-
-        <form id="f-chebyshev" class="sub-section">
-          <p class="sub-label">Chebyshev Inequality — P(|X − μ| ≥ t) ≤ σ² / t²</p>
-          <div class="field-grid cols-3">
-            <label class="field">Std dev σ<input class="input" name="sigma" type="number" step="any" value="2.1"></label>
-            <label class="field">Distance t (&gt; 0)<input class="input" name="t" type="number" step="any" value="3"></label>
-            <button class="btn btn-ghost" type="submit">Chebyshev Bound</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Result &amp; Shaded Area</h2>
-          <button id="btn-clt-plot" type="button" class="btn btn-secondary btn-sm">Plot CLT Area</button>
+        <div class="chart-wrap">
+          <svg id="exp-svg" class="svg-canvas" viewBox="0 0 760 360" role="img" aria-label="Interactive probability distribution plot"></svg>
         </div>
-        <div id="r-clt" class="result-box"><div class="result-empty">Compute CLT interval probability or Markov / Chebyshev bounds.</div></div>
-        <div class="plot-stage">
-          <div class="plot-toolbar">
-            <span class="card-desc" id="plot-label-clt">Sample mean distribution X̄</span>
-            <a id="dl-clt" class="btn btn-ghost btn-sm hidden" download="clt-area.png">Download PNG</a>
-          </div>
-          <div class="plot-frame">
-            <span id="ph-clt" class="plot-placeholder">Click “Plot CLT Area” to visualize the shaded sample-mean interval.</span>
-            <img id="img-clt" class="hidden" alt="Central Limit Theorem shaded area plot">
-          </div>
-        </div>
+        <div class="chart-hint">Drag the vertical handle(s) directly on the chart to adjust bounds in real time.</div>
+
+        <div id="exp-summary-strip" class="summary-strip"></div>
       </div>
     </section>
 
-    <!-- JOINT (DISCRETE) -->
-    <section id="panel-joint" class="workspace-grid hidden" role="tabpanel" aria-labelledby="tab-joint">
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Discrete Joint Distribution (X, Y)</h2>
-          <span id="joint-sum-badge" class="badge badge-success">Σp = 1.0000</span>
+    <!-- WORKSPACE 2: HYPOTHESIS TESTING, CIs & POWER -->
+    <section id="ws-inference" class="ws-grid hidden" role="tabpanel" aria-labelledby="tab-inference">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Statistical Test &amp; Power</h2>
         </div>
 
-        <div class="btn-row">
-          <button type="button" class="btn btn-ghost btn-sm joint-preset" data-pairs="0,0,0.1;0,1,0.2;1,0,0.3;1,1,0.4">Dependent 2×2</button>
-          <button type="button" class="btn btn-ghost btn-sm joint-preset" data-pairs="0,0,0.12;0,1,0.18;1,0,0.28;1,1,0.42">Independent 2×2</button>
-          <button type="button" class="btn btn-ghost btn-sm joint-preset" data-pairs="0,0,0.10;0,1,0.15;1,0,0.20;1,1,0.25;2,0,0.10;2,1,0.20">Exam 3×2</button>
-          <button id="btn-joint-norm" type="button" class="btn btn-ghost btn-sm">Normalize Σp→1</button>
+        <div class="seg-group" id="inf-subtabs" role="tablist" aria-label="Test family">
+          <button type="button" class="seg-btn is-active" data-inf="means">Means</button>
+          <button type="button" class="seg-btn" data-inf="props">Props / A/B</button>
+          <button type="button" class="seg-btn" data-inf="power">Power</button>
+          <button type="button" class="seg-btn" data-inf="chisq">χ²</button>
+          <button type="button" class="seg-btn" data-inf="anova">ANOVA</button>
         </div>
 
-        <div class="sub-section">
-          <div class="card-head">
-            <p class="sub-label">Interactive Probability Table p(x, y)</p>
-            <div class="btn-row">
-              <button id="btn-joint-add-x" type="button" class="btn btn-ghost btn-sm">+ X Col</button>
-              <button id="btn-joint-add-y" type="button" class="btn btn-ghost btn-sm">+ Y Row</button>
+        <!-- Means form -->
+        <form id="inf-form-means" class="sub-block">
+          <div class="grid-2">
+            <label class="field">Test Type
+              <select id="inf-means-type" class="select">
+                <option value="two_sample_t_welch" selected>2-Sample Welch t</option>
+                <option value="two_sample_t_equal">2-Sample Student t</option>
+                <option value="one_sample_t">1-Sample t</option>
+                <option value="one_sample_z">1-Sample z</option>
+              </select>
+            </label>
+            <label class="field">Input Mode
+              <select id="inf-means-mode" class="select">
+                <option value="summary" selected>Summary Stats</option>
+                <option value="raw">Raw Observations</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">Alternative H₁
+              <select id="inf-means-alt" class="select">
+                <option value="two-sided" selected>Two-sided (≠)</option>
+                <option value="greater">Greater (&gt;)</option>
+                <option value="less">Less (&lt;)</option>
+              </select>
+            </label>
+            <label class="field">Significance α
+              <input id="inf-means-alpha" class="input" type="number" step="0.005" min="0.0001" max="0.49" value="0.05">
+            </label>
+          </div>
+          <div id="inf-means-one-opts" class="grid-2 hidden">
+            <label class="field">Null μ₀<input id="inf-means-mu0" class="input" type="number" step="any" value="0"></label>
+            <label class="field" id="inf-means-popsig-wrap">Pop σ<input id="inf-means-popsig" class="input" type="number" step="any" value="15"></label>
+          </div>
+          <div id="inf-means-summary-fields" class="sub-block">
+            <div class="grid-3">
+              <label class="field">Mean₁<input id="inf-m1" class="input" type="number" step="any" value="104.2"></label>
+              <label class="field">SD₁<input id="inf-s1" class="input" type="number" step="any" value="12.5"></label>
+              <label class="field">n₁<input id="inf-n1" class="input" type="number" step="1" min="2" value="30"></label>
+            </div>
+            <div id="inf-means-g2-summary" class="grid-3">
+              <label class="field">Mean₂<input id="inf-m2" class="input" type="number" step="any" value="96.8"></label>
+              <label class="field">SD₂<input id="inf-s2" class="input" type="number" step="any" value="11.2"></label>
+              <label class="field">n₂<input id="inf-n2" class="input" type="number" step="1" min="2" value="28"></label>
             </div>
           </div>
-          <div class="table-scroll" id="joint-table-wrap"></div>
+          <div id="inf-means-raw-fields" class="sub-block hidden">
+            <label class="field">Sample 1 (comma/space/newline)
+              <textarea id="inf-raw1" class="textarea">102, 108, 99, 105, 110, 103, 97, 106</textarea>
+            </label>
+            <label id="inf-means-g2-raw" class="field">Sample 2
+              <textarea id="inf-raw2" class="textarea">94, 98, 91, 96, 95, 100, 93, 97</textarea>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">Run Means Test</button>
+        </form>
+
+        <!-- Proportions form -->
+        <form id="inf-form-props" class="sub-block hidden">
+          <div class="grid-3">
+            <label class="field">Test
+              <select id="inf-props-type" class="select">
+                <option value="two_prop" selected>2-Prop A/B</option>
+                <option value="one_prop">1-Prop z</option>
+              </select>
+            </label>
+            <label class="field">Alternative
+              <select id="inf-props-alt" class="select">
+                <option value="two-sided" selected>Two-sided</option>
+                <option value="greater">Greater</option>
+                <option value="less">Less</option>
+              </select>
+            </label>
+            <label class="field">α<input id="inf-props-alpha" class="input" type="number" step="0.005" value="0.05"></label>
+          </div>
+          <div class="grid-2">
+            <label class="field">Control Successes x₁<input id="inf-px1" class="input" type="number" step="1" min="0" value="120"></label>
+            <label class="field">Control Trials n₁<input id="inf-pn1" class="input" type="number" step="1" min="1" value="1000"></label>
+          </div>
+          <div id="inf-props-g2" class="grid-2">
+            <label class="field">Variant Successes x₂<input id="inf-px2" class="input" type="number" step="1" min="0" value="156"></label>
+            <label class="field">Variant Trials n₂<input id="inf-pn2" class="input" type="number" step="1" min="1" value="1000"></label>
+          </div>
+          <div id="inf-props-p0-wrap" class="hidden">
+            <label class="field">Null Proportion p₀<input id="inf-pp0" class="input" type="number" step="any" value="0.5"></label>
+          </div>
+          <button type="submit" class="btn btn-primary">Compute Proportions &amp; Wilson CI</button>
+        </form>
+
+        <!-- Power form -->
+        <form id="inf-form-power" class="sub-block hidden">
+          <div class="grid-2">
+            <label class="field">Design
+              <select id="inf-pw-mode" class="select">
+                <option value="two_prop" selected>Two-Proportion A/B</option>
+                <option value="two_mean">Two-Sample Means</option>
+                <option value="one_mean">One-Sample Mean</option>
+              </select>
+            </label>
+            <label class="field">Solve For
+              <select id="inf-pw-solve" class="select">
+                <option value="sample_size" selected>Required n / group</option>
+                <option value="power">Achieved Power</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid-3">
+            <label class="field">α<input id="inf-pw-alpha" class="input" type="number" step="0.005" value="0.05"></label>
+            <label class="field" id="inf-pw-target-wrap">Power (1−β)<input id="inf-pw-target" class="input" type="number" step="0.05" value="0.80"></label>
+            <label class="field hidden" id="inf-pw-n-wrap">n / group<input id="inf-pw-n" class="input" type="number" step="1" min="2" value="500"></label>
+            <label class="field">Alt H₁
+              <select id="inf-pw-alt" class="select">
+                <option value="two-sided" selected>Two-sided</option>
+                <option value="greater">One-sided</option>
+              </select>
+            </label>
+          </div>
+          <div id="inf-pw-prop-fields" class="grid-2">
+            <label class="field">Baseline p₁<input id="inf-pw-p1" class="input" type="number" step="0.01" value="0.12"></label>
+            <label class="field">Variant p₂<input id="inf-pw-p2" class="input" type="number" step="0.01" value="0.16"></label>
+          </div>
+          <div id="inf-pw-mean-fields" class="grid-2 hidden">
+            <label class="field">Expected Δμ<input id="inf-pw-diff" class="input" type="number" step="any" value="0.5"></label>
+            <label class="field">Common SD σ<input id="inf-pw-sd" class="input" type="number" step="any" value="1.0"></label>
+          </div>
+          <button type="submit" class="btn btn-primary">Solve Power &amp; Plot Curves</button>
+        </form>
+
+        <!-- Chi-squared form -->
+        <form id="inf-form-chisq" class="sub-block hidden">
+          <div class="grid-2">
+            <label class="field">Mode
+              <select id="inf-chi-mode" class="select">
+                <option value="independence" selected>R×C Contingency Table</option>
+                <option value="gof">Goodness-of-Fit (1D)</option>
+              </select>
+            </label>
+            <label class="field">Significance α<input id="inf-chi-alpha" class="input" type="number" step="0.005" value="0.05"></label>
+          </div>
+          <div id="inf-chi-rxc-wrap" class="sub-block">
+            <div class="row-wrap">
+              <button id="btn-chi-add-row" type="button" class="btn btn-sm">+ Row</button>
+              <button id="btn-chi-add-col" type="button" class="btn btn-sm">+ Col</button>
+              <button id="btn-chi-rem-row" type="button" class="btn btn-sm">− Row</button>
+              <button id="btn-chi-rem-col" type="button" class="btn btn-sm">− Col</button>
+            </div>
+            <div id="inf-chi-grid" class="table-scroll"></div>
+          </div>
+          <div id="inf-chi-gof-wrap" class="sub-block hidden">
+            <label class="field">Observed Counts<input id="inf-chi-obs" class="input" value="25, 20, 15, 40"></label>
+            <label class="field">Expected Probs or Counts (blank = equal)<input id="inf-chi-exp" class="input" value="0.25, 0.25, 0.25, 0.25"></label>
+          </div>
+          <button type="submit" class="btn btn-primary">Run χ² Test</button>
+        </form>
+
+        <!-- ANOVA form -->
+        <form id="inf-form-anova" class="sub-block hidden">
+          <div class="grid-2">
+            <label class="field">Input Mode
+              <select id="inf-anova-mode" class="select">
+                <option value="summary" selected>Group Summary Stats</option>
+                <option value="raw">Raw Group Values</option>
+              </select>
+            </label>
+            <label class="field">Significance α<input id="inf-anova-alpha" class="input" type="number" step="0.005" value="0.05"></label>
+          </div>
+          <div class="row-wrap">
+            <button id="btn-anova-add-grp" type="button" class="btn btn-sm">+ Add Group</button>
+            <button id="btn-anova-rem-grp" type="button" class="btn btn-sm">− Remove</button>
+          </div>
+          <div id="inf-anova-groups" class="sub-block"></div>
+          <button type="submit" class="btn btn-primary">Run One-Way ANOVA</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title" id="inf-chart-title">Test Result &amp; Rejection Region</h2>
+          <div class="row-wrap">
+            <button id="inf-power-curve-toggle" type="button" class="btn btn-sm hidden">Switch Curve: vs MDE</button>
+            <button id="inf-export-svg" type="button" class="btn btn-sm">SVG</button>
+            <button id="inf-export-png" type="button" class="btn btn-sm">2× PNG</button>
+            <button id="inf-export-json" type="button" class="btn btn-sm">JSON</button>
+          </div>
         </div>
 
-        <form id="f-joint" class="sub-section">
-          <label class="field">Raw pairs (x,y,p;… — synced with table)
-            <input id="joint-pairs-input" class="input" name="pairs" value="0,0,0.1;0,1,0.2;1,0,0.3;1,1,0.4">
+        <div id="inf-error" class="banner banner-err hidden" role="alert"></div>
+
+        <div class="hero-readout">
+          <div>
+            <div id="inf-verdict" class="hero-expr mono">Run test to evaluate H₀</div>
+            <div id="inf-subreadout" class="chart-hint mono"></div>
+          </div>
+          <div id="inf-main-stat" class="hero-val mono">—</div>
+        </div>
+
+        <div id="inf-metrics" class="summary-strip"></div>
+
+        <div class="chart-wrap">
+          <svg id="inf-svg" class="svg-canvas" viewBox="0 0 760 340" role="img" aria-label="Hypothesis test or power visualization"></svg>
+        </div>
+
+        <div id="inf-extra-tables" class="table-scroll"></div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE 3: EMPIRICAL DATA & DISTRIBUTION FITTER -->
+    <section id="ws-fitting" class="ws-grid hidden" role="tabpanel" aria-labelledby="tab-fitting">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Empirical Data Input</h2>
+        </div>
+
+        <div class="sub-block">
+          <p class="sub-label">Sample Datasets</p>
+          <div id="fit-samples-bar" class="row-wrap"></div>
+        </div>
+
+        <form id="fit-form" class="sub-block">
+          <label class="field">Paste Observations (CSV / TSV / whitespace / newlines)
+            <textarea id="fit-raw-input" class="textarea" rows="7"></textarea>
           </label>
-          <div class="btn-row">
-            <button class="btn btn-primary" type="submit">Compute Joint Stats</button>
-            <button id="btn-joint-heat" type="button" class="btn btn-secondary">Show Heatmap</button>
+          <div class="grid-2">
+            <label class="field">Histogram Bin Rule
+              <select id="fit-bin-rule" class="select">
+                <option value="fd" selected>Freedman–Diaconis</option>
+                <option value="sturges">Sturges</option>
+                <option value="scott">Scott</option>
+                <option value="manual">Manual count</option>
+              </select>
+            </label>
+            <label class="field" id="fit-manual-bins-wrap">Manual Bins
+              <input id="fit-manual-bins" class="input" type="number" min="3" max="150" value="20">
+            </label>
           </div>
+          <button type="submit" class="btn btn-primary">Analyze &amp; Fit Distributions (MLE)</button>
         </form>
+
+        <div class="sub-block">
+          <p class="sub-label">MLE Goodness-of-Fit Ranking (Click Row to Overlay)</p>
+          <div id="fit-ranking-table" class="table-scroll"></div>
+          <div id="fit-skipped-note" class="chart-hint"></div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Marginals, Moments &amp; Heatmap</h2>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Histogram + KDE &amp; Q-Q Diagnostics</h2>
+          <div class="row-wrap">
+            <button id="fit-export-svg" type="button" class="btn btn-sm">SVG (Hist)</button>
+            <button id="fit-export-png" type="button" class="btn btn-sm">2× PNG</button>
+            <button id="fit-export-json" type="button" class="btn btn-sm">JSON</button>
+          </div>
         </div>
-        <div id="r-joint" class="result-box"><div class="result-empty">Click “Compute Joint Stats” to calculate marginals, conditionals, independence, E, Var, Cov, and Corr.</div></div>
-        <div class="plot-stage">
-          <div class="plot-toolbar">
-            <span class="card-desc">Joint PMF heatmap p(x, y)</span>
-            <a id="dl-joint" class="btn btn-ghost btn-sm hidden" download="joint-heatmap.png">Download PNG</a>
-          </div>
-          <div class="plot-frame">
-            <span id="ph-joint" class="plot-placeholder">Click “Show Heatmap” to render an annotated teal heatmap.</span>
-            <img id="img-joint-heat" class="hidden" alt="Joint discrete distribution heatmap">
-          </div>
+
+        <div id="fit-error" class="banner banner-err hidden" role="alert"></div>
+        <div id="fit-descriptives" class="summary-strip"></div>
+        <div id="fit-outliers-banner" class="banner banner-warn hidden"></div>
+
+        <div class="chart-wrap">
+          <svg id="fit-hist-svg" class="svg-canvas" viewBox="0 0 760 300" role="img" aria-label="Histogram with KDE and fitted MLE PDF"></svg>
+        </div>
+        <div class="chart-wrap">
+          <svg id="fit-qq-svg" class="svg-canvas" viewBox="0 0 760 260" role="img" aria-label="Q-Q plot for selected fitted distribution"></svg>
         </div>
       </div>
     </section>
 
-    <!-- WORKED EXAMPLES -->
-    <section class="card" aria-labelledby="examples-heading">
-      <div class="card-head">
-        <h2 id="examples-heading" class="card-title">Worked Examples</h2>
-        <span class="card-desc">One-click DLBDSS walkthroughs with live compute, plot &amp; FX-991EX check</span>
+    <!-- WORKSPACE 4: INTERACTIVE SIMULATORS & JOINT MATRIX -->
+    <section id="ws-simulators" class="ws-grid hidden" role="tabpanel" aria-labelledby="tab-simulators">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Simulators &amp; Bivariate Lab</h2>
+          <div class="seg-group" id="sim-subtabs">
+            <button type="button" class="seg-btn is-active" data-sim="clt">CLT Lab</button>
+            <button type="button" class="seg-btn" data-sim="joint">Joint (X, Y)</button>
+          </div>
+        </div>
+
+        <!-- CLT Controls -->
+        <form id="sim-form-clt" class="sub-block">
+          <label class="field">Source Population
+            <select id="sim-clt-pop" class="select">
+              <option value="exponential" selected>Exponential (λ = 1, skewed)</option>
+              <option value="uniform">Uniform (0, 1)</option>
+              <option value="skewed_beta">Skewed Beta (0.7, 3)</option>
+              <option value="bimodal">Bimodal Mixture (½N(−2) + ½N(2))</option>
+              <option value="bernoulli">Bernoulli (p = 0.25)</option>
+              <option value="poisson">Poisson (λ = 1.5)</option>
+            </select>
+          </label>
+          <label class="field">Sample Size n (1–200)
+            <div class="slider-row">
+              <input id="sim-clt-n-range" type="range" min="1" max="200" step="1" value="30">
+              <input id="sim-clt-n" class="input" type="number" min="1" max="200" value="30">
+            </div>
+          </label>
+          <label class="field">Trial Count N (100–50,000)
+            <div class="slider-row">
+              <input id="sim-clt-trials-range" type="range" min="200" max="25000" step="200" value="5000">
+              <input id="sim-clt-trials" class="input" type="number" min="100" max="50000" value="5000">
+            </div>
+          </label>
+          <div class="grid-2">
+            <label class="field">Seed (blank = random)<input id="sim-clt-seed" class="input" type="number" value="42"></label>
+            <label class="field">Bins<input id="sim-clt-bins" class="input" type="number" min="8" max="100" value="36"></label>
+          </div>
+          <button type="submit" class="btn btn-primary">Re-Simulate X̄</button>
+        </form>
+
+        <!-- Joint Matrix Controls -->
+        <div id="sim-form-joint" class="sub-block hidden">
+          <div class="panel-head">
+            <p class="sub-label">Probability Matrix P(X = x, Y = y)</p>
+            <span id="joint-sum-badge" class="badge badge-ok mono">Σp = 1.0000</span>
+          </div>
+          <div class="row-wrap" id="joint-presets-bar"></div>
+          <div class="row-wrap">
+            <button id="btn-j-add-x" type="button" class="btn btn-sm">+ X Row</button>
+            <button id="btn-j-add-y" type="button" class="btn btn-sm">+ Y Col</button>
+            <button id="btn-j-normalize" type="button" class="btn btn-sm">Normalize Σp→1</button>
+          </div>
+          <div id="joint-matrix-editor" class="table-scroll"></div>
+          <button id="btn-j-analyze" type="button" class="btn btn-primary">Analyze Joint Distribution</button>
+        </div>
       </div>
-      <div class="examples-grid">
-        <button id="ex-normal" type="button" class="example-card">
-          <span class="example-tag">Normal</span>
-          <span class="example-title">Φ(1.96) &amp; Φ⁻¹(0.975)</span>
-        </button>
-        <button id="ex-binom" type="button" class="example-card">
-          <span class="example-tag">Binomial</span>
-          <span class="example-title">n=20, p=0.5, P(8 ≤ X ≤ 12)</span>
-        </button>
-        <button id="ex-pois" type="button" class="example-card">
-          <span class="example-tag">Poisson</span>
-          <span class="example-title">λ=3, P(X = 2) &amp; PMF</span>
-        </button>
-        <button id="ex-joint" type="button" class="example-card">
-          <span class="example-tag">Joint (X, Y)</span>
-          <span class="example-title">2×2 Dependence, Cov &amp; Corr</span>
-        </button>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title" id="sim-chart-title">CLT Sampling Distribution of X̄</h2>
+          <div class="row-wrap">
+            <button id="sim-export-svg" type="button" class="btn btn-sm">SVG</button>
+            <button id="sim-export-png" type="button" class="btn btn-sm">2× PNG</button>
+            <button id="sim-export-json" type="button" class="btn btn-sm">JSON</button>
+          </div>
+        </div>
+
+        <div id="sim-error" class="banner banner-err hidden" role="alert"></div>
+        <div id="sim-metrics" class="summary-strip"></div>
+
+        <div class="chart-wrap">
+          <svg id="sim-svg" class="svg-canvas" viewBox="0 0 760 340" role="img" aria-label="Simulator or joint heatmap plot"></svg>
+        </div>
+        <div id="sim-extra" class="table-scroll"></div>
       </div>
-      <div id="r-examples" class="result-box hidden"></div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <span>probplots-web v0.3.0 · Built by <a href="https://0xwulf.dev" rel="noopener noreferrer">0xWulf</a></span>
-    <span>
-      <a href="/healthz">/healthz</a> ·
+  <footer class="footer">
+    <span class="mono">p05.dev · Built by <a href="https://0xwulf.dev" target="_blank" rel="noopener noreferrer">0xWulf</a> · SciPy + FastAPI</span>
+    <span class="mono">
       <a href="/docs">/docs</a> ·
+      <a href="/healthz">/healthz</a> ·
       <a href="/about">/about</a>
     </span>
   </footer>
 
-  <!-- ABOUT MODAL -->
-  <div id="about-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="about-title">
+  <!-- Keyboard Shortcuts & About Modal -->
+  <div id="help-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
     <div class="modal-card">
-      <div class="modal-head">
-        <h2 id="about-title">About probplots-web</h2>
-        <button id="about-close" type="button" class="icon-btn" aria-label="Close About">✕</button>
+      <div class="panel-head">
+        <h2 id="help-title" class="panel-title mono">p05.dev — Workbench &amp; Shortcuts</h2>
+        <button id="help-close" type="button" class="icon-btn" aria-label="Close">✕</button>
       </div>
-      <p class="card-desc">DLBDSS helper: fast probability calculations, headless teal PNG plots, inequalities, and an interactive discrete joint-distribution analyzer.</p>
-      <div class="modal-list">
-        <div><strong>Version:</strong> 0.3.0</div>
-        <div><strong>Endpoints:</strong> <code>/api/norm/*</code>, <code>/api/binom/*</code>, <code>/api/pois/*</code>, <code>/api/geom/*</code>, <code>/api/exp/*</code>, <code>/api/unif/*</code>, <code>/api/clt</code>, <code>/api/ineq/*</code>, <code>/api/joint</code>, <code>/plot/png/*</code></div>
-        <div><strong>Links:</strong> <a href="/docs">/docs</a> · <a href="/healthz">/healthz</a> · <a href="/about">/about</a></div>
-        <div><strong>Repo:</strong> <a href="https://github.com/hexawulf/probplots-web" rel="noopener noreferrer">hexawulf/probplots-web</a></div>
-        <div><strong>Maintainer:</strong> 0xWulf · <a href="mailto:dev@0xwulf.dev" rel="noopener noreferrer">dev@0xwulf.dev</a></div>
+      <div class="kbd-table">
+        <kbd>1</kbd>–<kbd>4</kbd><span>Switch between Workspaces 1–4</span>
+        <kbd>/</kbd><span>Focus distribution quick search</span>
+        <kbd>d</kbd><span>Toggle dark / light theme</span>
+        <kbd>c</kbd><span>Toggle Code &amp; Formula drawer (Python / R / LaTeX / curl)</span>
+        <kbd>r</kbd><span>Reset active workspace to default state</span>
+        <kbd>?</kbd><span>Open this dialog</span>
+        <kbd>Esc</kbd><span>Close modal or search dropdown</span>
       </div>
-      <div class="modal-foot">
-        <button id="about-ok" type="button" class="btn btn-primary">Close</button>
+      <div class="sub-block">
+        <p class="sub-label">Architecture &amp; Compatibility</p>
+        <div class="chart-hint">
+          Version 1.0.0 · Backed by SciPy &amp; NumPy with survival-function (<code class="mono">sf</code>/<code class="mono">isf</code>) tail precision, strict CSP (<code class="mono">default-src 'self'</code>), and 100% backwards-compatible v1 <code class="mono">/api/*</code> &amp; <code class="mono">/plot/*</code> endpoints.
+        </div>
+      </div>
+      <div class="sub-block about-meta">
+        <div class="about-row">
+          <span class="sub-label">Developer</span>
+          <span>Erling Wulf Weinreich (<a href="https://0xwulf.dev" target="_blank" rel="noopener noreferrer">0xWulf</a>) · <a href="mailto:dev@0xwulf.dev">dev@0xwulf.dev</a></span>
+        </div>
+        <div class="about-row">
+          <span class="sub-label">GitHub</span>
+          <a class="mono" href="https://github.com/hexawulf/p05.dev" target="_blank" rel="noopener noreferrer">https://github.com/hexawulf/p05.dev</a>
+        </div>
+      </div>
+      <div class="row-wrap">
+        <a class="btn btn-sm" href="/docs">OpenAPI /docs</a>
+        <button id="help-ok" type="button" class="btn btn-primary btn-sm">Done</button>
       </div>
     </div>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

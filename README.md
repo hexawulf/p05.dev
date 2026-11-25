@@ -1,60 +1,73 @@
-# probplots-web
+# p05.dev (`probplots-web`)
 
-Self-hosted FastAPI calculator and headless plotting web app for probability and statistics (DLBDSS course helper, paired with [hexawulf/probplots](https://github.com/hexawulf/probplots)).
+Self-hosted interactive probability & statistics workbench built with FastAPI, SciPy/NumPy, and zero-build vanilla ES modules + custom SVG plotting (`https://p05.dev` / `https://probplots.piapps.dev`).
 
-## Features
+Repository: [github.com/hexawulf/p05.dev](https://github.com/hexawulf/p05.dev) · Author: Erling Wulf Weinreich ([0xWulf](https://0xwulf.dev)) · `dev@0xwulf.dev`
 
-- **Distributions:** Normal (PDF, CDF, interval, inverse quantile, Z-score), Binomial (PMF, CDF, at-most, at-least, between), Poisson (PMF, CDF, at-least, between), Geometric (0-indexed failures before 1st success: PMF & CDF), Exponential (PDF, CDF, survival, inverse), and Continuous Uniform (PDF, CDF).
-- **CLT & Probability Bounds:** Central Limit Theorem interval calculator for sample means (`X̄ ~ N(μ, σ²/n)`) plus Markov and Chebyshev inequality bounds.
-- **Interactive Discrete Joint Distribution `(X, Y)`:** Editable contingency table synced with `x,y,p;...` pairs, live `Σp` indicator with one-click Normalize, marginals, conditionals `P(X|Y)` & `P(Y|X)`, independence test, `E`, `Var`, `Cov`, `Corr`, and annotated heatmap PNG.
-- **Headless Server-Side PNG Plots:** Thread-safe Matplotlib Agg figures styled in the 0xWulf teal palette (`light` and `dark` themes) with shaded regions, highlighted discrete bars, Monte Carlo simulations, and PNG downloads.
-- **Self-Hosted Zero-CDN UI:** Responsive Light/Dark UI with strict `Content-Security-Policy: default-src 'self'`, precision selector (`2 / 4 / 6 / Full` d.p.), worked examples, and Casio FX-991EX keystroke cross-checks.
+## Highlights (`v1.0.0`)
 
-## API Endpoints (GET)
+- **Workspace 1 — Distribution Explorer & Comparator:** 14 distributions (9 continuous: Normal, Student's *t*, $\chi^2$, *F*, Exponential, Uniform, Gamma, Beta, Log-Normal; 5 discrete: Binomial, Poisson, 0-indexed Geometric, Negative Binomial, Hypergeometric). Features draggable bound handles directly on the SVG chart, two-way inverse quantile snapping, up to 3 overlaid comparison curves, PDF/CDF toggle, and exact moments/entropy powered by `scipy.stats` survival functions (`sf` / `isf`) to avoid tail cancellation.
+- **Workspace 2 — Hypothesis Testing, CIs & Power:** 1/2-sample *z*, Student's *t*, and Welch's *t* (raw or summary stats + Cohen's *d*), 1/2-proportion *z*-tests with Wilson score CIs and lift, sample size & statistical power solver (Power vs. *n* and Power vs. MDE curves), $\chi^2$ Goodness-of-Fit & interactive $R \times C$ Contingency Table (Cramér's *V* & adjusted standardized residuals), and One-Way ANOVA ($\eta^2$, $\omega^2$).
+- **Workspace 3 — Empirical Data & MLE Fitter:** Paste raw numbers or load sample datasets for full descriptive stats, $1.5 \times \text{IQR}$ outlier flags, Histogram (Freedman–Diaconis / Sturges / Scott / manual) + Gaussian KDE, MLE distribution fitting ranked by AIC & Kolmogorov–Smirnov tests, and interactive Q-Q plots.
+- **Workspace 4 — CLT & Discrete Joint Matrix:** Live Central Limit Theorem sampling simulator across 6 source populations (`n = 1..200`, `N = 100..50,000`) and an editable discrete $(X, Y)$ joint probability table with auto-normalize, SVG heatmap, marginal bar charts, conditionals, mutual information, Cov, and Corr.
+- **Standalone-Domain Polish:** URL state persistence (`Copy Share Link`), live Python (`scipy.stats`) / R / LaTeX / `curl` snippet drawer, lossless `.svg` + 2× Retina `.png` + `.json` exports, keyboard shortcuts (`1`–`4`, `/`, `d`, `c`, `r`, `?`), 0xWulf Canonical Teal light/dark themes, and strict `Content-Security-Policy: default-src 'self'`.
 
-### System
-- `GET /`, `HEAD /` — Web UI
-- `GET /healthz`, `HEAD /healthz` — Health check (`{"status": "ok"}`)
-- `GET /about` — App metadata & version
-- `GET /docs` — OpenAPI / Swagger UI
+## Architecture
 
-### Numeric Calculations
-- **Normal:** `/api/norm/pdf?x&mu&sigma`, `/api/norm/cdf?x&mu&sigma`, `/api/norm/interval?lower&upper&mu&sigma`, `/api/norm/inv?p&mu&sigma`
-- **Binomial:** `/api/binom/pmf?n&p&k`, `/api/binom/cdf?n&p&k`, `/api/binom/cdf-range?n&p&kmin&kmax`, `/api/binom/atmost?n&p&k`, `/api/binom/atleast?n&p&k`, `/api/binom/between?n&p&kmin&kmax`
-- **Poisson:** `/api/pois/pmf?lam&k`, `/api/pois/cdf?lam&k`, `/api/pois/atleast?lam&k`, `/api/pois/between?lam&kmin&kmax`
-- **Geometric (0-indexed failures):** `/api/geom/pmf?p&k`, `/api/geom/cdf?p&k`
-- **Exponential:** `/api/exp/pdf?lam&x`, `/api/exp/cdf?lam&x`, `/api/exp/inv?lam&p`
-- **Uniform:** `/api/unif/pdf?a&b&x`, `/api/unif/cdf?a&b&x`
-- **CLT & Inequalities:** `/api/clt?mu&sigma&n&lower&upper`, `/api/ineq/markov?mean&t`, `/api/ineq/chebyshev?sigma&t`
-- **Joint (discrete):** `/api/joint?pairs=0,0,0.1;0,1,0.2;1,0,0.3;1,1,0.4` (`p >= 0`, `Σp = 1 ± 1e-10`; returns `support_X`, `support_Y`, `joint`, `marginal_X`, `marginal_Y`, `conditionals`, `independent`, `E`, `Var`, `Cov`, `Corr`)
+```text
+app/
+├── api.py                 # FastAPI entrypoint, CSP middleware, System & v1 Legacy routes
+├── api_v2.py              # /api/v2/* OpenAPI-documented workbench routes
+├── dlbdss_core.py         # Preserved v1 probability & inequality functions
+├── plotting.py            # Preserved v1 Matplotlib Agg PNG plotters
+└── stats/
+    ├── schemas.py         # Pydantic v2 models & finite-float validators
+    ├── distributions.py   # 14-distribution sf/isf engine & catalog
+    ├── inference.py       # Means, Proportions, Power, Chi-Squared & ANOVA
+    ├── fitting.py         # Descriptives, KDE, MLE AIC/KS fitter & Q-Q coords
+    ├── simulators.py      # CLT simulator & Joint (X, Y) matrix analyzer
+    └── export_png.py      # Thread-safe 2x Retina Matplotlib PNG exporter
+static/
+├── index.html             # Zero-build workbench shell (strict CSP compliant)
+├── favicon.svg            # Canonical 256×256 teal curve mark
+├── css/workbench.css      # Monochrome Swiss grid + 0xWulf Teal tokens
+└── js/                    # Native ES modules (state, api, chart, snippets, workspaces/*)
+```
 
-### PNG Plots (optional `theme=light|dark`)
-- `/plot/png/normal?mu&sigma&shade_low&shade_high` (alias `/plot/pdf/normal`)
-- `/plot/png/binomial_pmf?n&p&highlight_k&highlight_min&highlight_max` (alias `/plot/pmf/binom`)
-- `/plot/png/binomial_cdf?n&p&highlight_k` (alias `/plot/cdf/binom`)
-- `/plot/png/binomial_sim?n&N&p&bins` (alias `/plot/sim/binom`)
-- `/plot/png/poisson_pmf?lam&kmax&highlight_k&highlight_min&highlight_max` (alias `/plot/pmf/poisson`)
-- `/plot/png/poisson_cdf?lam&kmax&highlight_k`
-- `/plot/png/poisson_sim?n&lam&bins` (alias `/plot/sim/poisson`)
-- `/plot/png/geometric_pmf?p&kmax&highlight_k`
-- `/plot/png/exponential_pdf?lam&xmax&highlight_x`
-- `/plot/png/exponential_cdf?lam&xmax&highlight_x`
-- `/plot/png/uniform_pdf?a&b&highlight_x`
-- `/plot/png/uniform_cdf?a&b&highlight_x`
-- `/plot/png/clt?mu&sigma&n&lower&upper` (alias `/plot/clt`)
-- `/plot/png/joint_discrete?pairs=...` (alias `/plot/heat/joint`)
+## API Quickstart (`https://p05.dev`)
+
+Interactive OpenAPI docs live at `/docs` (`/openapi.json`).
+
+```bash
+# Health & metadata
+curl -sS https://p05.dev/healthz
+curl -sS https://p05.dev/about
+
+# Evaluate Standard Normal α = 0.05 two-tailed region
+curl -sS -X POST https://p05.dev/api/v2/dist/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"dist":"normal","params":{"mu":0,"sigma":1},"region":"two_tailed","a":-1.96,"b":1.96}'
+
+# Two-proportion A/B power analysis
+curl -sS -X POST https://p05.dev/api/v2/inference/power \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"two_prop","solve_for":"sample_size","p1":0.12,"p2":0.16,"target_power":0.80}'
+```
+
+### Preserved v1 Legacy Compatibility
+Every v1 endpoint (`/api/norm/*`, `/api/binom/*`, `/api/pois/*`, `/api/geom/*`, `/api/exp/*`, `/api/unif/*`, `/api/clt`, `/api/ineq/*`, `/api/joint`, `/plot/png/*`, and `/plot/{pdf,pmf,cdf,sim,clt,heat}/*`) remains 100% backwards-compatible under the `v1 Legacy` OpenAPI tag.
 
 ## Local Development & Testing
 
 ```bash
 bash scripts/install.sh
-bash scripts/run-dev.sh  # binds 127.0.0.1:5009
+.venv/bin/pip install --upgrade-strategy only-if-needed -r requirements-dev.txt
+bash scripts/run-dev.sh   # binds 127.0.0.1:5009
 ```
 
-For environments without the sibling `probplots` helper repo, set `PROBPLOTS_STUB=1` (or point `PROBPLOTS_HELPER_DIR` to your `probplots` checkout).
+Run lint and full verification suite:
 
 ```bash
-# Lint & tests (install pytest, httpx, ruff into .venv)
 .venv/bin/ruff check app tests
-.venv/bin/pytest
+.venv/bin/pytest -v
 ```
